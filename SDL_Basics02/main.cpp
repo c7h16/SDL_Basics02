@@ -74,5 +74,10 @@ int main(int argc, const char * argv[]) {
         SDL_Delay(1000);
     }
     
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    
     return 0;
 }
