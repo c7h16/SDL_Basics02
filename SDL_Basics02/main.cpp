@@ -10,21 +10,28 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
+//declaring the functions
+void logSDLError(std::ostream &os, const std::string &msg);
+SDL_Texture* loadTexture(const std::string &file, SDL_Renderer *renderer);
+void renderTexture(SDL_Texture *texture, SDL_Renderer *renderer, int x, int y);
 
+//declaring constants
+const int WINDOW_WIDTH = 640;
+const int WINDOW_HEIGHT = 480;
+
+//main program/game
 int main(int argc, const char * argv[]) {
     
 //starts SDL, in this case 'everything', throws an error if it doesn't work
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        std::cout << "Error initializing: " << SDL_GetError() << std::endl;
+       logSDLError(std::cout, "STD_Init");
         return 1;
     };
     
     //create the window (uses a pointer) if window doesnt work, throw error, clean up, exit.
-    SDL_Window *window = SDL_CreateWindow("Hello Everybody", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_ALLOW_HIGHDPI);
+    SDL_Window *window = SDL_CreateWindow("Lesson 2", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_ALLOW_HIGHDPI);
     if (window == NULL) {
-        std::cout << "Something screwed up: " << SDL_GetError() << std::endl;
+        logSDLError(std::cout, "Create Window");
         SDL_Quit();
         return 1;
     };
@@ -32,48 +39,47 @@ int main(int argc, const char * argv[]) {
     //create a Renderer; if it can't be made, throw error, destory window, quit
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == NULL) {
+        logSDLError(std::cout, "CreateRenderer");
         SDL_DestroyWindow(window);
-        std::cout << "Something got jacked" << SDL_GetError() << std::endl;
         SDL_Quit();
         return 1;
     }
     
-    //loading the image; SDL_LoadBMP -> SDL_Surface* -> SDL_Texture
-    //SDL_LeadBMP takes file path and gives us an SDL_Surface to use (or NULL)
+// Loading Textures with functions we created below
+    //create pointer variables and set to nullptr.
+    SDL_Texture *background = nullptr;
+    SDL_Texture *image = nullptr;
     
-    SDL_Surface *imageSurface = SDL_LoadBMP("Calcifer.bmp");
-    if (imageSurface == NULL) {
-        SDL_DestroyRenderer(renderer);
+    //load textures to the correct renderer and check for errors.
+    background = loadTexture("background.bmp", renderer);
+    image = loadTexture("smile.bmp", renderer);
+    if (background == nullptr || image == nullptr) {
         SDL_DestroyWindow(window);
-        std::cout << "Couldn't Load the BitMap" << SDL_GetError() << std::endl;
         SDL_Quit();
         return 1;
     }
     
-    //We take the SDL_Surface and create a texture
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, imageSurface);
-    if (texture == NULL) {
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        std::cout << "Couldn't load texture made from bitmap: " << SDL_GetError() << std::endl;
-        SDL_Quit();
-        return 1;
-        
-    }
+//Draw a tiled background
     
-    //Fianlly draw the dang thing
-    //render it three times then stop, using a for loop
-    for (int i = 0; i < 3; i++) {
-        //first we clear the renderer
-        SDL_RenderClear(renderer);
-        //draw the texture (converted bitmap) on the unseen buffer
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-        //update the screen user sees
-        SDL_RenderPresent(renderer);
-        SDL_Delay(1000);
-    }
+    //clear the renderer, always.
+    SDL_RenderClear(renderer);
     
-    SDL_DestroyTexture(texture);
+    int backgroundWidth;
+    int backgroundHeight;
+    SDL_QueryTexture(background, NULL, NULL, &backgroundWidth, &backgroundHeight);
+    renderTexture(background, renderer, 0, 0);
+    renderTexture(background, renderer, backgroundWidth, 0);
+    renderTexture(background, renderer, 0, backgroundHeight);
+    renderTexture(background, renderer, backgroundWidth, backgroundHeight);
+    
+    //Fianlly draw the tiled background
+    SDL_RenderPresent(renderer);
+    SDL_Delay(3000);
+   
+   
+    //cleanup, close widnows and exit
+    SDL_DestroyTexture(image);
+    SDL_DestroyTexture(background);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
